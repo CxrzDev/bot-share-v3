@@ -1,13 +1,134 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum Platform {
+  FACEBOOK
+  LINE
+}
+
+enum AccountStatus {
+  ACTIVE
+  ERROR
+  PENDING
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  REJECTED
+}
+
+enum ScheduleStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+  PAUSED
+}
+
+model Package {
+  id              String        @id @default(cuid())
+  name            String        @unique
+  price           Float
+  maxFbAccounts   Int
+  maxLineAccounts Int
+  isPopular       Boolean       @default(false)
+  description     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  users           User[]
+  transactions    Transaction[]
+
+  @@map("packages")
+}
+
+model User {
+  id               String        @id @default(cuid())
+  email            String        @unique
+  password         String
+  name             String?
+  role             UserRole      @default(USER)
+  currentPackageId String?
+  packageExpiry    DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  package          Package?      @relation(fields: [currentPackageId], references: [id])
+  accounts         Account[]
+  sessions         Session[]
+  transactions     Transaction[]
+
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Account {
+  id          String        @id @default(cuid())
+  userId      String
+  platform    Platform
+  accountName String
+  token       String?
+  cookie      String?
+  avatarUrl   String?
+  status      AccountStatus @default(PENDING)
+  lastChecked DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedules   Schedule[]
+
+  @@map("accounts")
+}
+
+model Schedule {
+  id            String         @id @default(cuid())
+  accountId     String
+  targetGroup   String
+  messages      String
+  scheduledTime DateTime
+  loopCount     Int            @default(1)
+  autoDelay     Boolean        @default(true)
+  delayMs       Int            @default(950)
+  status        ScheduleStatus @default(PENDING)
+  errorMessage  String?
+  runCount      Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  account       Account        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("schedules")
+}
+
+model Transaction {
+  id        String            @id @default(cuid())
+  userId    String
+  packageId String
+  amount    Float
+  slipUrl   String
+  status    TransactionStatus @default(PENDING)
+  note      String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  package   Package           @relation(fields: [packageId], references: [id])
+
+  @@map("transactions")
 }
