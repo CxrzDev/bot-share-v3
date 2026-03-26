@@ -14,11 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -49,45 +44,148 @@ interface AddAccountModalProps {
   lineQuota: { current: number; max: number; canAdd: boolean };
 }
 
-// ─── Tooltip help content ─────────────────────────────────────────────────────
+// ─── Help Guide Dialog ────────────────────────────────────────────────────────
 
-const FB_HELP: ReactNode = (
-  <div className="space-y-1 text-xs">
-    <p className="font-semibold">วิธีรับ Cookie:</p>
-    <ol className="list-decimal space-y-0.5 pl-3">
-      <li>เปิด Facebook ใน Chrome</li>
-      <li>กด F12 → Application → Cookies</li>
-      <li>คัดลอก cookie ทั้งหมด</li>
-    </ol>
-    <p className="text-muted-foreground">หรือใช้ Access Token จาก Graph API Explorer</p>
-  </div>
-);
+type HelpStep = { title: string; description: string };
 
-const LINE_HELP: ReactNode = (
-  <div className="space-y-1 text-xs">
-    <p className="font-semibold">วิธีรับ Channel Access Token:</p>
-    <ol className="list-decimal space-y-0.5 pl-3">
-      <li>ไปที่ developers.line.biz</li>
-      <li>เลือก Channel → Messaging API</li>
-      <li>คัดลอก Channel access token</li>
-    </ol>
-  </div>
-);
+const FB_STEPS: HelpStep[] = [
+  {
+    title: "เปิด Facebook ใน Chrome หรือ Edge",
+    description: "ให้แน่ใจว่าคุณล็อกอินเข้าบัญชี Facebook เรียบร้อยแล้ว",
+  },
+  {
+    title: "เปิด Developer Tools (F12)",
+    description: "กดปุ่ม F12 หรือคลิกขวา → Inspect เพื่อเปิด DevTools",
+  },
+  {
+    title: "ไปที่แท็บ Application",
+    description: "ในแถบด้านบนของ DevTools ให้คลิกแท็บ 'Application' (หรือ 'Storage' ใน Firefox)",
+  },
+  {
+    title: "เลือก Cookies → facebook.com",
+    description: "ในเมนูซ้าย ให้ขยาย Cookies แล้วคลิก 'https://www.facebook.com'",
+  },
+  {
+    title: "คัดลอก Cookie ทั้งหมด",
+    description: "กด Ctrl+A เพื่อเลือกทุกแถว แล้วคัดลอก หรือใช้ Extension ชื่อ 'Cookie Editor' เพื่อ Export เป็น JSON ได้ง่ายกว่า",
+  },
+  {
+    title: "วางใน BotShare",
+    description: "วาง Cookie ที่คัดลอกลงในช่องด้านบน แล้วกด 'เชื่อมต่อบัญชี'",
+  },
+];
+
+const LINE_STEPS: HelpStep[] = [
+  {
+    title: "ไปที่ LINE Developers Console",
+    description: "เปิดเบราว์เซอร์แล้วไปที่ developers.line.biz แล้วล็อกอินด้วยบัญชี LINE ของคุณ",
+  },
+  {
+    title: "เลือก Provider และ Channel",
+    description: "คลิก Provider ของคุณ แล้วเลือก Channel ที่ต้องการ (ต้องเป็นประเภท Messaging API)",
+  },
+  {
+    title: "ไปที่แท็บ Messaging API",
+    description: "คลิกแท็บ 'Messaging API' ที่ด้านบนของหน้า Channel",
+  },
+  {
+    title: "เลื่อนลงหา Channel access token",
+    description: "เลื่อนลงมาจนเจอส่วน 'Channel access token (long-lived)' แล้วกด 'Issue' ถ้ายังไม่มี Token",
+  },
+  {
+    title: "คัดลอก Token",
+    description: "กดปุ่ม Copy ข้าง Token เพื่อคัดลอก หรือคลิกที่ Token แล้วกด Ctrl+C",
+  },
+  {
+    title: "วางใน BotShare",
+    description: "วาง Channel Access Token ลงในช่องด้านบน แล้วกด 'เชื่อมต่อบัญชี'",
+  },
+];
+
+function HelpGuideDialog({ platform }: { platform: "FACEBOOK" | "LINE" }) {
+  const [open, setOpen] = useState(false);
+  const steps = platform === "FACEBOOK" ? FB_STEPS : LINE_STEPS;
+  const title =
+    platform === "FACEBOOK"
+      ? "วิธีรับ Facebook Cookie / Access Token"
+      : "วิธีรับ LINE Channel Access Token";
+
+  return (
+    <>
+      <button
+        type="button"
+        tabIndex={-1}
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 hover:underline"
+      >
+        <HelpCircle className="h-3.5 w-3.5" />
+        ดูวิธีหาได้ที่ไหน?
+      </button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {platform === "FACEBOOK" ? (
+                <FacebookIcon className="h-4 w-4 text-blue-600" />
+              ) : (
+                <MessageCircle className="h-4 w-4 text-green-600" />
+              )}
+              {title}
+            </DialogTitle>
+            <DialogDescription>
+              ทำตามขั้นตอนด้านล่างเพื่อรับ{" "}
+              {platform === "FACEBOOK" ? "Cookie หรือ Access Token" : "Channel Access Token"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <ol className="mt-2 space-y-3">
+            {steps.map((step, i) => (
+              <li key={i} className="flex gap-3">
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                  {i + 1}
+                </span>
+                <div className="flex-1 space-y-0.5">
+                  <p className="text-sm font-medium">{step.title}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{step.description}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 dark:border-amber-800 dark:bg-amber-950/40">
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              <span className="font-semibold">⚠️ หมายเหตุ:</span>{" "}
+              {platform === "FACEBOOK"
+                ? "Cookie/Token มีอายุการใช้งาน กรุณาอัปเดตหาก Bot หยุดทำงาน"
+                : "Token ระยะยาว (Long-lived) ไม่มีวันหมดอายุ แต่ต้อง Re-issue หากมีการเปลี่ยนแปลง"}
+            </p>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <Button variant="outline" size="sm" onClick={() => setOpen(false)}>
+              เข้าใจแล้ว
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
 
 // ─── Field wrapper ─────────────────────────────────────────────────────────────
-// label is a block element strictly ABOVE the input — no flex-row mixing
 
 function Field({
   id,
   label,
   error,
-  help,
+  helpPlatform,
   children,
 }: {
   id: string;
   label: string;
   error?: string;
-  help?: ReactNode;
+  helpPlatform?: "FACEBOOK" | "LINE";
   children: ReactNode;
 }) {
   return (
@@ -101,22 +199,7 @@ function Field({
         >
           {label}
         </label>
-        {help && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                tabIndex={-1}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <HelpCircle className="h-3.5 w-3.5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="left" className="max-w-52" sideOffset={6}>
-              {help}
-            </TooltipContent>
-          </Tooltip>
-        )}
+        {helpPlatform && <HelpGuideDialog platform={helpPlatform} />}
       </div>
       {/* Input */}
       {children}
@@ -299,7 +382,7 @@ export function AddAccountModal({ fbQuota, lineQuota }: AddAccountModalProps) {
                   id="credential"
                   label={platform === "FACEBOOK" ? "Cookie หรือ Access Token" : "Channel Access Token"}
                   error={errors.credential?.message}
-                  help={platform === "FACEBOOK" ? FB_HELP : LINE_HELP}
+                  helpPlatform={platform}
                 >
                   {platform === "FACEBOOK" ? (
                     <Textarea

@@ -4,7 +4,8 @@ import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Menu } from "lucide-react";
+import { LogOut } from "lucide-react";
+import { MobileNav } from "@/components/dashboard/mobile-nav";
 
 interface HeaderProps {
   userName: string;
@@ -22,10 +23,7 @@ export function Header({ userName, packageName }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-16 items-center gap-4 px-6">
-        {/* Mobile menu button */}
-        <Button variant="ghost" size="icon" className="lg:hidden">
-          <Menu className="h-5 w-5" />
-        </Button>
+        <MobileNav />
 
         <div className="flex-1" />
 
