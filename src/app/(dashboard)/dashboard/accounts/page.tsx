@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddAccountModal } from "@/components/accounts/add-account-modal";
 import { AccountCard } from "@/components/accounts/account-card";
+import { AccountsNotify } from "@/components/accounts/accounts-notify";
 import { MessageCircle } from "lucide-react";
 import { FacebookIcon } from "@/components/ui/platform-icons";
 
@@ -160,8 +161,13 @@ function AccountsSkeleton() {
 
 export default function AccountsPage() {
   return (
-    <Suspense fallback={<AccountsSkeleton />}>
-      <AccountsList />
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <AccountsNotify />
+      </Suspense>
+      <Suspense fallback={<AccountsSkeleton />}>
+        <AccountsList />
+      </Suspense>
+    </>
   );
 }

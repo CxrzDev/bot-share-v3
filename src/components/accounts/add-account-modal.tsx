@@ -27,6 +27,10 @@ import {
   HelpCircle,
   AlertTriangle,
   ShieldAlert,
+  Zap,
+  KeyRound,
+  ChevronRight,
+  ExternalLink,
 } from "lucide-react";
 import { FacebookIcon } from "@/components/ui/platform-icons";
 
@@ -213,11 +217,18 @@ function Field({
   );
 }
 
-// ─── Main modal ───────────────────────────────────────────────────────────────
+// ─── Manual form (fallback for advanced users) ────────────────────────────────
 
-export function AddAccountModal({ fbQuota, lineQuota }: AddAccountModalProps) {
+function ManualForm({
+  fbQuota,
+  lineQuota,
+  onClose,
+}: {
+  fbQuota: AddAccountModalProps["fbQuota"];
+  lineQuota: AddAccountModalProps["lineQuota"];
+  onClose: () => void;
+}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [platform, setPlatform] = useState<"FACEBOOK" | "LINE">("FACEBOOK");
 
   const {
@@ -250,7 +261,7 @@ export function AddAccountModal({ fbQuota, lineQuota }: AddAccountModalProps) {
           description: "บัญชีพร้อมใช้งานแล้ว",
         });
       }
-      setOpen(false);
+      onClose();
       reset();
       router.refresh();
     } else {
@@ -261,7 +272,142 @@ export function AddAccountModal({ fbQuota, lineQuota }: AddAccountModalProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input type="hidden" {...register("platform")} />
+
+      {/* Platform switcher */}
+      <div className="grid grid-cols-2 gap-2 rounded-lg border bg-muted/40 p-1">
+        {(["FACEBOOK", "LINE"] as const).map((p) => {
+          const q = p === "FACEBOOK" ? fbQuota : lineQuota;
+          const isActive = platform === p;
+          return (
+            <button
+              key={p}
+              type="button"
+              onClick={() => switchPlatform(p)}
+              className={cn(
+                "flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all",
+                isActive
+                  ? "bg-background text-foreground shadow-sm ring-1 ring-border"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <span className="flex items-center gap-1.5">
+                {p === "FACEBOOK" ? (
+                  <FacebookIcon className="h-3.5 w-3.5 text-blue-600" />
+                ) : (
+                  <MessageCircle className="h-3.5 w-3.5 text-green-600" />
+                )}
+                {p === "FACEBOOK" ? "Facebook" : "LINE"}
+              </span>
+              <Badge
+                variant={q.canAdd ? "secondary" : "destructive"}
+                className="text-xs tabular-nums px-1.5 py-0"
+              >
+                {q.current}/{q.max}
+              </Badge>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-3 flex flex-col gap-y-4 rounded-lg border p-4" style={{ minHeight: "240px" }}>
+        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/40">
+          <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700 dark:text-amber-400" />
+          <p className="text-xs text-amber-700 dark:text-amber-400">
+            Token/Cookie ส่งตรงไป Server เท่านั้น ไม่เปิดเผยฝั่ง Client
+          </p>
+        </div>
+
+        <div>
+          <div className="mb-1.5 flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">โควต้า {platform === "FACEBOOK" ? "Facebook" : "LINE"}</span>
+            <span className={quota.canAdd ? "text-foreground font-medium" : "text-destructive font-medium"}>
+              {quota.current} / {quota.max}
+            </span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+            <div
+              className={cn("h-full rounded-full transition-all duration-300", platform === "FACEBOOK" ? "bg-blue-600" : "bg-green-600")}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+
+        {!quota.canAdd ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4 text-center">
+            <AlertTriangle className="h-8 w-8 text-amber-500" />
+            <p className="font-medium">โควต้าเต็มแล้ว</p>
+            <p className="text-sm text-muted-foreground">กรุณาอัปเกรดแพ็กเกจเพื่อเพิ่มบัญชีได้มากขึ้น</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-y-4">
+            <Field id="accountName" label="ชื่อบัญชี" error={errors.accountName?.message}>
+              <Input
+                id="accountName"
+                placeholder={platform === "FACEBOOK" ? "ชื่อเพจ Facebook ของคุณ" : "ชื่อ LINE Bot ของคุณ"}
+                {...register("accountName")}
+              />
+            </Field>
+            <Field
+              id="credential"
+              label={platform === "FACEBOOK" ? "Cookie หรือ Access Token" : "Channel Access Token"}
+              error={errors.credential?.message}
+              helpPlatform={platform}
+            >
+              {platform === "FACEBOOK" ? (
+                <Textarea
+                  id="credential"
+                  rows={3}
+                  placeholder="วางค่า Cookie หรือ Access Token ที่นี่..."
+                  className="resize-none font-mono text-xs"
+                  {...register("credential")}
+                />
+              ) : (
+                <Input
+                  id="credential"
+                  type="password"
+                  placeholder="Channel Access Token จาก LINE Developers"
+                  className="font-mono"
+                  {...register("credential")}
+                />
+              )}
+            </Field>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 flex gap-2">
+        <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
+          ยกเลิก
+        </Button>
+        <Button type="submit" className="flex-1" disabled={isSubmitting || !quota.canAdd}>
+          {isSubmitting ? (
+            <><Loader2 className="h-4 w-4 animate-spin" />กำลังตรวจสอบ...</>
+          ) : (
+            "เชื่อมต่อบัญชี"
+          )}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+// ─── Main modal ───────────────────────────────────────────────────────────────
+
+type Mode = "oauth" | "manual";
+
+export function AddAccountModal({ fbQuota, lineQuota }: AddAccountModalProps) {
+  const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<Mode>("oauth");
+
+  const handleClose = () => {
+    setOpen(false);
+    setMode("oauth");
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setMode("oauth"); }}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4" />
@@ -269,7 +415,7 @@ export function AddAccountModal({ fbQuota, lineQuota }: AddAccountModalProps) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>เพิ่มบัญชีใหม่</DialogTitle>
           <DialogDescription>
@@ -277,161 +423,113 @@ export function AddAccountModal({ fbQuota, lineQuota }: AddAccountModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <input type="hidden" {...register("platform")} />
-
-          {/* ── Platform switcher (custom — no Tabs component) ── */}
-          <div className="grid grid-cols-2 gap-2 rounded-lg border bg-muted/40 p-1">
-            {(["FACEBOOK", "LINE"] as const).map((p) => {
-              const q = p === "FACEBOOK" ? fbQuota : lineQuota;
-              const isActive = platform === p;
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => switchPlatform(p)}
-                  className={cn(
-                    "flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all",
-                    isActive
-                      ? "bg-background text-foreground shadow-sm ring-1 ring-border"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <span className="flex items-center gap-1.5">
-                    {p === "FACEBOOK" ? (
-                      <FacebookIcon className="h-3.5 w-3.5 text-blue-600" />
-                    ) : (
-                      <MessageCircle className="h-3.5 w-3.5 text-green-600" />
-                    )}
-                    {p === "FACEBOOK" ? "Facebook" : "LINE"}
-                  </span>
-                  {/* Inline quota badge */}
-                  <Badge
-                    variant={q.canAdd ? "secondary" : "destructive"}
-                    className="text-xs tabular-nums px-1.5 py-0"
-                  >
-                    {q.current}/{q.max}
-                  </Badge>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ── Content area ── */}
-          <div
-            className="mt-3 flex flex-col gap-y-4 rounded-lg border p-4"
-            style={{ minHeight: "260px" }}
+        {/* Mode switcher */}
+        <div className="grid grid-cols-2 gap-1 rounded-lg border bg-muted/40 p-1">
+          <button
+            type="button"
+            onClick={() => setMode("oauth")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-all",
+              mode === "oauth"
+                ? "bg-background shadow-sm ring-1 ring-border text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
           >
-            {/* Security notice */}
-            <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/40">
-              <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700 dark:text-amber-400" />
-              <p className="text-xs text-amber-700 dark:text-amber-400">
-                Token/Cookie ส่งตรงไป Server เท่านั้น ไม่เปิดเผยฝั่ง Client
+            <Zap className="h-3 w-3" />
+            เชื่อมต่อด้วย OAuth
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("manual")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-all",
+              mode === "manual"
+                ? "bg-background shadow-sm ring-1 ring-border text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <KeyRound className="h-3 w-3" />
+            กรอกข้อมูลเอง
+          </button>
+        </div>
+
+        {mode === "oauth" ? (
+          <div className="space-y-3">
+            {/* Facebook connect */}
+            <div className="rounded-xl border p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/40">
+                    <FacebookIcon className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">Facebook</p>
+                    <p className="text-xs text-muted-foreground">เพจและกลุ่ม</p>
+                  </div>
+                </div>
+                <Badge variant={fbQuota.canAdd ? "secondary" : "destructive"} className="text-xs tabular-nums">
+                  {fbQuota.current}/{fbQuota.max}
+                </Badge>
+              </div>
+              {fbQuota.canAdd ? (
+                <a href="/api/connect/facebook" className="block w-full">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={handleClose}>
+                    <FacebookIcon className="h-4 w-4" />
+                    เชื่อมต่อกับ Facebook
+                    <ChevronRight className="ml-auto h-4 w-4 opacity-60" />
+                  </Button>
+                </a>
+              ) : (
+                <div className="flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+                  <p className="text-xs text-muted-foreground">โควต้าเต็มแล้ว กรุณาอัปเกรดแพ็กเกจ</p>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <ExternalLink className="h-3 w-3 shrink-0" />
+                ระบบจะดึง Facebook Pages ของคุณโดยอัตโนมัติ
               </p>
             </div>
 
-            {/* Quota progress bar */}
-            <div>
-              <div className="mb-1.5 flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">
-                  โควต้า {platform === "FACEBOOK" ? "Facebook" : "LINE"}
-                </span>
-                <span className={quota.canAdd ? "text-foreground font-medium" : "text-destructive font-medium"}>
-                  {quota.current} / {quota.max}
-                </span>
+            {/* LINE connect */}
+            <div className="rounded-xl border p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50 dark:bg-green-950/40">
+                    <MessageCircle className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">LINE</p>
+                    <p className="text-xs text-muted-foreground">LINE Login OAuth</p>
+                  </div>
+                </div>
+                <Badge variant={lineQuota.canAdd ? "secondary" : "destructive"} className="text-xs tabular-nums">
+                  {lineQuota.current}/{lineQuota.max}
+                </Badge>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all duration-300",
-                    platform === "FACEBOOK" ? "bg-blue-600" : "bg-green-600"
-                  )}
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Quota exceeded message OR form fields */}
-            {!quota.canAdd ? (
-              <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4 text-center">
-                <AlertTriangle className="h-8 w-8 text-amber-500" />
-                <p className="font-medium">โควต้าเต็มแล้ว</p>
-                <p className="text-sm text-muted-foreground">
-                  กรุณาอัปเกรดแพ็กเกจเพื่อเพิ่มบัญชีได้มากขึ้น
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-y-4">
-                <Field
-                  id="accountName"
-                  label="ชื่อบัญชี"
-                  error={errors.accountName?.message}
-                >
-                  <Input
-                    id="accountName"
-                    placeholder={
-                      platform === "FACEBOOK"
-                        ? "ชื่อเพจ Facebook ของคุณ"
-                        : "ชื่อ LINE Bot ของคุณ"
-                    }
-                    {...register("accountName")}
-                  />
-                </Field>
-
-                <Field
-                  id="credential"
-                  label={platform === "FACEBOOK" ? "Cookie หรือ Access Token" : "Channel Access Token"}
-                  error={errors.credential?.message}
-                  helpPlatform={platform}
-                >
-                  {platform === "FACEBOOK" ? (
-                    <Textarea
-                      id="credential"
-                      rows={4}
-                      placeholder="วางค่า Cookie หรือ Access Token ที่นี่..."
-                      className="resize-none font-mono text-xs"
-                      {...register("credential")}
-                    />
-                  ) : (
-                    <Input
-                      id="credential"
-                      type="password"
-                      placeholder="Channel Access Token จาก LINE Developers"
-                      className="font-mono"
-                      {...register("credential")}
-                    />
-                  )}
-                </Field>
-              </div>
-            )}
-          </div>
-
-          {/* ── Action buttons ── */}
-          <div className="mt-4 flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => setOpen(false)}
-            >
-              ยกเลิก
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={isSubmitting || !quota.canAdd}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  กำลังตรวจสอบ...
-                </>
+              {lineQuota.canAdd ? (
+                <a href="/api/connect/line" className="block w-full">
+                  <Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={handleClose}>
+                    <MessageCircle className="h-4 w-4" />
+                    เชื่อมต่อกับ LINE
+                    <ChevronRight className="ml-auto h-4 w-4 opacity-60" />
+                  </Button>
+                </a>
               ) : (
-                "เชื่อมต่อบัญชี"
+                <div className="flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+                  <p className="text-xs text-muted-foreground">โควต้าเต็มแล้ว กรุณาอัปเกรดแพ็กเกจ</p>
+                </div>
               )}
-            </Button>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <ExternalLink className="h-3 w-3 shrink-0" />
+                สำหรับ LINE Messaging API ให้ใช้แท็บ &quot;กรอกข้อมูลเอง&quot;
+              </p>
+            </div>
           </div>
-        </form>
+        ) : (
+          <ManualForm fbQuota={fbQuota} lineQuota={lineQuota} onClose={handleClose} />
+        )}
       </DialogContent>
     </Dialog>
   );
