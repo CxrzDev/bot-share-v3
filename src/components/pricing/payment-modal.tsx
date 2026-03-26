@@ -112,12 +112,20 @@ export function PaymentModal({ open, onOpenChange, package: pkg }: PaymentModalP
               <div className="flex-shrink-0">
                 <div className="relative h-28 w-28 overflow-hidden rounded-lg border-2 border-border bg-white">
                   <Image
-                    src="/images/payment-qr.jpg"
+                    src="/images/payment-qr.png"
                     alt="PromptPay QR Code"
                     fill
                     className="object-contain p-1"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
+                      const img = e.target as HTMLImageElement;
+                      img.style.display = "none";
+                      const parent = img.parentElement;
+                      if (parent && !parent.querySelector(".qr-fallback")) {
+                        const fb = document.createElement("div");
+                        fb.className = "qr-fallback flex h-full w-full items-center justify-center text-center text-[10px] text-muted-foreground p-1";
+                        fb.textContent = "ติดต่อแอดมิน";
+                        parent.appendChild(fb);
+                      }
                     }}
                   />
                 </div>
