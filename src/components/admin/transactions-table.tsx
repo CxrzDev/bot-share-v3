@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { approveTransaction, rejectTransaction } from "@/lib/actions/admin-actions";
 import {
   CheckCircle2,
@@ -146,7 +145,7 @@ function ActionButtons({ tx, onDone }: { tx: Transaction; onDone: () => void }) 
 
 export function TransactionsTable({ transactions }: { transactions: Transaction[] }) {
   const [slipTarget, setSlipTarget] = useState<string | null>(null);
-  const [rows, setRows] = useState<Transaction[]>(transactions);
+  const rows = transactions;
 
   const refresh = () => {
     window.location.reload();
