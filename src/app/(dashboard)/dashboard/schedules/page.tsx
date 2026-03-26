@@ -41,23 +41,23 @@ export default async function SchedulesPage() {
   const running = serialized.filter((s) => s.status === "RUNNING").length;
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
             <Calendar className="h-5 w-5 text-primary" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">ตารางโพสต์</h1>
-            <p className="text-sm text-muted-foreground">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold sm:text-2xl">ตารางโพสต์</h1>
+            <p className="text-sm text-muted-foreground line-clamp-1">
               {schedules.length > 0
-                ? `${schedules.length} รายการ · รอดำเนินการ ${pending} · กำลังรัน ${running}`
+                ? `${schedules.length} รายการ · รอ ${pending} · รัน ${running}`
                 : "จัดการตารางโพสต์อัตโนมัติของคุณ"}
             </p>
           </div>
         </div>
-        <Button asChild>
+        <Button asChild className="w-full sm:w-auto shrink-0">
           <Link href="/dashboard/schedules/new">
             <CalendarPlus className="h-4 w-4" />
             ตารางโพสต์ใหม่

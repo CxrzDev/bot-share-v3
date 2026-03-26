@@ -31,14 +31,16 @@ async function AccountsList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">บัญชี</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">บัญชี</h1>
           <p className="text-muted-foreground">
             จัดการบัญชี Facebook และ LINE ของคุณ
           </p>
         </div>
-        <AddAccountModal fbQuota={fbQuota} lineQuota={lineQuota} />
+        <div className="shrink-0">
+          <AddAccountModal fbQuota={fbQuota} lineQuota={lineQuota} />
+        </div>
       </div>
 
       {/* Quota Cards */}

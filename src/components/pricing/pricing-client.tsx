@@ -78,10 +78,10 @@ export function PricingClient({
   const isExpired = expiryDate ? expiryDate < new Date() : false;
 
   return (
-    <div className="space-y-8 p-6">
+    <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">แพ็กเกจและราคา</h1>
+        <h1 className="text-xl font-bold sm:text-2xl">แพ็กเกจและราคา</h1>
         <p className="mt-1 text-muted-foreground">
           เลือกแพ็กเกจที่เหมาะกับความต้องการของคุณ
         </p>
@@ -109,7 +109,7 @@ export function PricingClient({
       </div>
 
       {/* Pricing cards */}
-      <div className="grid gap-6 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {packages.map((pkg) => {
           const isCurrent = pkg.id === currentPackageId && !isExpired;
           const isFree = pkg.price === 0;
@@ -119,7 +119,7 @@ export function PricingClient({
             <div
               key={pkg.id}
               className={cn(
-                "relative flex flex-col rounded-2xl border p-6 transition-shadow hover:shadow-md",
+                "relative flex flex-col rounded-2xl border p-4 sm:p-6 transition-shadow hover:shadow-md",
                 pkg.isPopular
                   ? "border-primary/50 bg-primary/5 shadow-sm"
                   : "bg-card",
@@ -229,7 +229,7 @@ export function PricingClient({
 
       {/* Recent transactions */}
       {recentTransactions.length > 0 && (
-        <div className="rounded-xl border bg-card p-6">
+        <div className="rounded-xl border bg-card p-4 sm:p-6">
           <div className="mb-4 flex items-center gap-2">
             <Receipt className="h-4 w-4 text-muted-foreground" />
             <h2 className="font-semibold">ประวัติการชำระเงิน</h2>

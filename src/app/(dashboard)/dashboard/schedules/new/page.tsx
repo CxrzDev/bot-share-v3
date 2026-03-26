@@ -24,7 +24,7 @@ export default async function NewSchedulePage() {
   }));
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" asChild className="-ml-2">
@@ -40,13 +40,13 @@ export default async function NewSchedulePage() {
           <CalendarPlus className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">สร้างตารางโพสต์ใหม่</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">สร้างตารางโพสต์ใหม่</h1>
           <p className="text-sm text-muted-foreground">กรอกข้อมูลเพื่อตั้งเวลาโพสต์อัตโนมัติ</p>
         </div>
       </div>
 
       {/* Form card */}
-      <div className="rounded-xl border bg-card p-6">
+      <div className="rounded-xl border bg-card p-4 sm:p-6">
         <CreateScheduleForm accounts={serialized} />
       </div>
     </div>

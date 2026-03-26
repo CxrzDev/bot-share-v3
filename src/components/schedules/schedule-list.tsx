@@ -284,7 +284,7 @@ export function ScheduleList({ schedules }: { schedules: Schedule[] }) {
   return (
     <div className="space-y-4">
       {/* Filter tabs */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
         {filterTabs.map((tab) => {
           const count = counts[tab.key];
           if (tab.key !== "ALL" && count === 0) return null;
@@ -294,7 +294,7 @@ export function ScheduleList({ schedules }: { schedules: Schedule[] }) {
               type="button"
               onClick={() => setFilter(tab.key)}
               className={cn(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                 filter === tab.key
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-background text-muted-foreground hover:text-foreground"

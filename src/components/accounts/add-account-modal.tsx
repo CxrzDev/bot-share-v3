@@ -415,7 +415,7 @@ export function AddAccountModal({ fbQuota, lineQuota }: AddAccountModalProps) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>เพิ่มบัญชีใหม่</DialogTitle>
           <DialogDescription>

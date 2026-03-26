@@ -43,7 +43,7 @@ async function DashboardStats() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">แดชบอร์ด</h1>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">แดชบอร์ด</h1>
         <p className="text-muted-foreground">
           ภาพรวมการใช้งานของคุณ
         </p>
@@ -136,15 +136,15 @@ async function DashboardStats() {
             <CardTitle>แพ็กเกจปัจจุบัน</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-2xl font-bold">{user.package.name}</h3>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="min-w-0">
+                <h3 className="text-xl font-bold sm:text-2xl">{user.package.name}</h3>
                 <p className="text-sm text-muted-foreground">
                   {user.package.description}
                 </p>
               </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold">
+              <div className="text-right shrink-0">
+                <p className="text-xl font-bold sm:text-2xl">
                   {user.package.price === 0
                     ? "ฟรี"
                     : `฿${user.package.price}`}
