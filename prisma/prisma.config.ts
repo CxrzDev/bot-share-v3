@@ -11,6 +11,6 @@ export default defineConfig({
   },
   datasource: {
     // ดึงค่า DATABASE_URL ที่โหลดมาจาก .env.local
-    url: { fromEnvVar: "DATABASE_URL" },
+    url: process.env.DATABASE_URL,
   },
 });
