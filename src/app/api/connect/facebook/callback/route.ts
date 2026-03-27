@@ -86,33 +86,22 @@ export async function GET(req: NextRequest) {
     const userToken = longTokenData.access_token ?? tokenData.access_token;
     console.log("[FB_OAUTH] Using token (long-lived):", !!longTokenData.access_token);
 
-    // Fetch managed pages
-    const pagesUrl = `https://graph.facebook.com/v18.0/me/accounts?` +
+    // Fetch user profile (basic permissions only)
+    const profileUrl = `https://graph.facebook.com/v18.0/me?` +
       new URLSearchParams({
         access_token: userToken,
-        fields: "id,name,access_token,picture",
+        fields: "id,name,email,picture",
       });
 
-    console.log("[FB_OAUTH] Fetching user pages...");
-    const pagesRes = await fetch(pagesUrl);
-    const pagesData = await pagesRes.json();
+    console.log("[FB_OAUTH] Fetching user profile...");
+    const profileRes = await fetch(profileUrl);
+    const profileData = await profileRes.json();
 
-    if (pagesData.error) {
-      return fail("fb_token", `Failed to fetch pages: ${pagesData.error.message || JSON.stringify(pagesData.error)}`);
+    if (profileData.error) {
+      return fail("fb_token", `Failed to fetch profile: ${profileData.error.message || JSON.stringify(profileData.error)}`);
     }
 
-    const pages: Array<{
-      id: string;
-      name: string;
-      access_token: string;
-      picture?: { data?: { url?: string } };
-    }> = pagesData.data ?? [];
-
-    console.log("[FB_OAUTH] Pages found:", pages.length);
-
-    if (pages.length === 0) {
-      return fail("no_pages", "User has no Facebook Pages to manage");
-    }
+    console.log("[FB_OAUTH] Profile fetched:", profileData.name);
 
     // Check user's quota
     const user = await prisma.user.findUnique({
@@ -130,59 +119,59 @@ export async function GET(req: NextRequest) {
     console.log("[FB_OAUTH] User quota check:", {
       currentAccounts: user.accounts.length,
       maxAllowed: user.package.maxFbAccounts,
-      pagesAvailable: pages.length
     });
 
     const maxAllowed = user.package.maxFbAccounts;
-    let saved = 0;
 
-    for (const page of pages) {
-      if (user.accounts.length + saved >= maxAllowed) {
-        console.log("[FB_OAUTH] Quota limit reached, stopping at", saved, "pages");
-        break;
-      }
-
-      const existing = await prisma.account.findFirst({
-        where: { userId, platform: "FACEBOOK", platformAccountId: page.id },
-      });
-
-      if (existing) {
-        console.log("[FB_OAUTH] Updating existing page:", page.name);
-        await prisma.account.update({
-          where: { id: existing.id },
-          data: {
-            token: page.access_token,
-            accountName: page.name,
-            avatarUrl: page.picture?.data?.url ?? existing.avatarUrl,
-            status: "ACTIVE",
-            connectedViaOAuth: true,
-            lastChecked: new Date(),
-          },
-        });
-      } else {
-        console.log("[FB_OAUTH] Creating new page:", page.name);
-        await prisma.account.create({
-          data: {
-            userId,
-            platform: "FACEBOOK",
-            accountName: page.name,
-            token: page.access_token,
-            platformAccountId: page.id,
-            avatarUrl: page.picture?.data?.url ?? null,
-            status: "ACTIVE",
-            connectedViaOAuth: true,
-            lastChecked: new Date(),
-          },
-        });
-        saved++;
-      }
+    if (user.accounts.length >= maxAllowed) {
+      console.log("[FB_OAUTH] Quota limit reached");
+      return fail("no_package", "Facebook account quota limit reached");
     }
 
-    console.log("[FB_OAUTH] Successfully saved", saved, "new pages");
+    // Check if account already exists
+    const existing = await prisma.account.findFirst({
+      where: { userId, platform: "FACEBOOK", platformAccountId: profileData.id },
+    });
 
-    return NextResponse.redirect(
-      new URL(`/dashboard/accounts?connected=facebook&saved=${saved}`, base)
-    );
+    if (existing) {
+      console.log("[FB_OAUTH] Updating existing account:", profileData.name);
+      await prisma.account.update({
+        where: { id: existing.id },
+        data: {
+          token: userToken,
+          accountName: profileData.name,
+          avatarUrl: profileData.picture?.data?.url ?? existing.avatarUrl,
+          status: "ACTIVE",
+          connectedViaOAuth: true,
+          lastChecked: new Date(),
+        },
+      });
+      
+      console.log("[FB_OAUTH] Successfully updated account");
+      return NextResponse.redirect(
+        new URL(`/dashboard/accounts?connected=facebook&saved=0`, base)
+      );
+    } else {
+      console.log("[FB_OAUTH] Creating new account:", profileData.name);
+      await prisma.account.create({
+        data: {
+          userId,
+          platform: "FACEBOOK",
+          accountName: profileData.name,
+          token: userToken,
+          platformAccountId: profileData.id,
+          avatarUrl: profileData.picture?.data?.url ?? null,
+          status: "ACTIVE",
+          connectedViaOAuth: true,
+          lastChecked: new Date(),
+        },
+      });
+
+      console.log("[FB_OAUTH] Successfully created account");
+      return NextResponse.redirect(
+        new URL(`/dashboard/accounts?connected=facebook&saved=1`, base)
+      );
+    }
   } catch (err) {
     console.error("[FB_OAUTH] Unexpected error:", err);
     return fail("fb_token", `Unexpected error: ${err instanceof Error ? err.message : String(err)}`);

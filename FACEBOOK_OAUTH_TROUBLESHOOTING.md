@@ -62,11 +62,11 @@ Look for these log messages in your terminal:
 [FB_OAUTH] Exchanging code for token...
 [FB_OAUTH] Token received, exchanging for long-lived token...
 [FB_OAUTH] Using token (long-lived): true
-[FB_OAUTH] Fetching user pages...
-[FB_OAUTH] Pages found: <count>
-[FB_OAUTH] User quota check: { currentAccounts, maxAllowed, pagesAvailable }
-[FB_OAUTH] Creating new page: <page_name>
-[FB_OAUTH] Successfully saved <count> new pages
+[FB_OAUTH] Fetching user profile...
+[FB_OAUTH] Profile fetched: <user_name>
+[FB_OAUTH] User quota check: { currentAccounts, maxAllowed }
+[FB_OAUTH] Creating new account: <user_name>
+[FB_OAUTH] Successfully created account
 ```
 
 **Error Flow:**
@@ -97,12 +97,12 @@ Look for these log messages in your terminal:
 2. Check Facebook app is not in Development Mode restrictions
 3. Ensure your Facebook account has the necessary permissions
 
-### Issue 4: "No Facebook Pages to manage"
-**Symptoms:** `[FB_OAUTH_ERROR] no_pages`
+### Issue 4: "Invalid Scopes" Error
+**Symptoms:** Facebook shows "Invalid Scopes" error during OAuth
 **Solution:**
-1. User must have at least one Facebook Page they manage
-2. User must grant permissions during OAuth flow
-3. Check that the app has requested correct scopes
+1. Verify the app is requesting only `public_profile` and `email` scopes
+2. Advanced permissions require Facebook App Review
+3. After App Review approval, scopes can be expanded
 
 ### Issue 5: "Missing Facebook credentials in environment"
 **Symptoms:** `[FB_OAUTH_ERROR] fb_config`
@@ -113,11 +113,11 @@ Look for these log messages in your terminal:
 
 ## Required Facebook Permissions
 
-The app requests these permissions:
-- `pages_manage_posts` - Post to Pages
-- `pages_show_list` - List Pages user manages
-- `publish_to_groups` - Post to Groups
-- `pages_read_engagement` - Read Page engagement data
+**Current Configuration (Basic Permissions - No App Review Required):**
+- `public_profile` - Access to user's public profile
+- `email` - Access to user's email address
+
+**Note:** Advanced permissions (pages_manage_posts, pages_show_list, publish_to_groups, pages_read_engagement) have been temporarily removed to allow the app to work without Facebook App Review. These will be added back after App Review approval.
 
 ## Database Schema
 
