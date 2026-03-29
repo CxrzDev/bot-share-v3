@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   const params = new URLSearchParams({
     client_id: appId,
     redirect_uri: redirectUri,
-    scope: "public_profile,email",
+    scope: "public_profile",
     state,
     response_type: "code",
   });
